@@ -1,0 +1,16 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    {{range .HeadTags}}
+        {{.}}
+    {{end}}
+</head>
+<body>
+    {{range .Body}} 
+        {{.}}
+    {{end}}
+    {{if .Footer}}
+        <p>footer</p>
+    {{end}}
+</body>
+</html>
