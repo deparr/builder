@@ -1,14 +1,26 @@
 package main
 
-import "fmt"
-import "github.com/deparr/builder/pkg/parse"
+import (
+	"fmt"
+
+	"github.com/deparr/builder/pkg/parser"
+)
 
 func main() {
-	file := `
-	A paragraph with **bold text**
-	`
+	file := `# Header
+## header 2
+---
 
-	r := ParseMd(file)
+*italic text*
+**bold text**`
 
-	fmt.Println(r.ToHtml())
+	p := parser.New(file)
+	res, err := p.Parse()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	for _, e := range res {
+		fmt.Printf("%v\n", e)
+	}
 }

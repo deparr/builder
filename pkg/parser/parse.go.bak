@@ -1,0 +1,62 @@
+package parser
+
+import (
+	"fmt"
+	"log"
+	"strings"
+)
+
+func takeUntil(in []byte, start int, delim string) (string, error) {
+	if start >= len(in) {
+		return "", fmt.Errorf("takeUntil: cannot start at %d on slice len %d", start, len(in))
+	}
+
+	var end int
+	// TODO: this function
+	for end = start + 1; end < len(in) && in[end] != 0xa
+	return "", nil
+}
+
+func ParseMd(file string) ([]Renderable, error) {
+	bytes := []byte(file)
+	res := make([]Renderable, 0, 10)
+	log.Println("parsing: ", bytes, len(bytes))
+	for i := 0; i < len(bytes); {
+		cur := bytes[i]
+		log.Println("switching on", cur)
+		switch cur {
+		case '#':
+			log.Println(">>header")
+			// TODO: handle different level headers
+			var end int
+			for end = i + 1; end < len(bytes) && bytes[end] != 0xa; {
+				end++
+			}
+			log.Printf(">>  len: %d\n", end-i)
+			h := strings.TrimSpace(string(bytes[i+1 : end]))
+			log.Printf(">> parsed: %s\n", h)
+			res = append(res, header{1, h})
+			i = end
+			log.Println(i)
+
+		case '*':
+			fallthrough
+		case '_':
+			bold := bytes[i+1] == cur
+			delim := cur
+			if bold {
+				// delim = delim + delim
+			}
+			start := i + 1
+			if bold {
+				start++
+			}
+
+
+
+			c, err := takeUntil(bytes, start, delim)
+		}
+	}
+
+	return res, nil
+}

@@ -1,8 +1,8 @@
-package parse_test
+package parser_test
 
 import (
 	"testing"
-	"github.com/deparr/templar/pkg/parse"
+	// "github.com/deparr/builder/pkg/parse"
 )
 
 
