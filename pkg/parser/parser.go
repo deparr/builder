@@ -52,31 +52,18 @@ func (p *Parser) nextToken() (Renderable, error) {
 			p.setPos(end)
 		} else if p.peekChar() == ' ' {
 		}
-		log.Println(">>hr OK")
-		log.Println("PARSER:", p)
 
 	case '\n':
 		p.readChar()
 		next, err = br{}, OK
 
-	case '_':
-		fallthrough
-	case '*':
-		if p.peekChar() == p.ch {
-			next, err = p.parseBold(p.ch)
-		} else {
-			next, err = p.parseItalic(p.ch)
-		}
-
-		if err != OK {
-			log.Fatal("unhandled error parsing bolditalic")
-		}
-
 	case 0:
 		log.Println("EOF in parser")
 		break
 	default:
-		log.Fatal("default in nextToken(), should be unreachable")
+		log.Println("parsing paragraph")
+		next, err = p.parseParagraph()
+		log.Println(next)
 	}
 	// todo: hmm
 	// if err != nil {
@@ -92,15 +79,20 @@ func (p *Parser) Parse() ([]Renderable, error) {
 	res := make([]Renderable, 0, 10)
 	var next Renderable
 	var err error
-	for p.pos < len(p.file) {
+	for p.hasInput() {
+		p.skipWhitespace()
 		next, err = p.nextToken()
 		if err != nil {
-			log.Println("Some error in Parse()")
+			log.Println("Some error in Parse():", err)
 		}
 		res = append(res, next)
 	}
 
 	return res, nil
+}
+
+func (p *Parser) hasInput() bool {
+	return p.pos < len(p.file) || p.ch != 0
 }
 
 func (p *Parser) skipWhitespace() {
@@ -136,6 +128,18 @@ func (p *Parser) readToEOL() {
 	for p.ch != '\n' && p.ch != 0 {
 		p.readChar()
 	}
+}
+
+func (p *Parser) takeUntil(target byte) (string, tokenError) {
+	start := p.pos
+	for p.ch != 0 && p.ch != '\n' && p.ch != target {
+		p.readChar()
+	}
+	if p.ch == 0 || (target != '\n' && p.ch == '\n') {
+		return "", shouldBeText
+	}
+	s := p.file[start:p.pos]
+	return s, OK
 }
 
 func (p *Parser) peekChar() byte {
@@ -176,13 +180,80 @@ func (p *Parser) parseHeader() (header, tokenError) {
 	//	and silently ignore eof
 	p.readChar()
 
-	log.Println(">>header OK")
 	return header{level, head}, OK
 }
 
+func (p *Parser) parseParagraph() (paragraph, tokenError) {
+	content := make([]Renderable, 0, 5)
+	for p.ch != '\n' && p.ch != 0 {
+		var next Renderable
+		var err tokenError
+		switch p.ch {
+		case '_':
+			fallthrough
+		case '*':
+			if p.peekChar() == p.ch {
+				next, err = p.parseBold(p.ch)
+			} else {
+				next, err = p.parseItalic(p.ch)
+			}
+			log.Println("parse after boldi", p)
+
+			if err != OK {
+				log.Fatal("todo: unhandled error parsing bolditalic")
+			}
+
+		case '[':
+			next, err = p.parseLink()
+
+		default:
+			// BUG: this is wrong, assumes fmts are always whole lines
+			s, err := p.takeUntil('\n')
+			if err != OK {
+			}
+
+			next = span{s}
+		}
+		content = append(content, next)
+		if len(content) > 4 {
+			log.Fatal("too big")
+		}
+
+		if p.ch == '\n' {
+			if p.peekChar() == '\n' {
+				break
+			}
+			p.readChar()
+			log.Println("WARN: need to handle double space at end of line to insert br")
+		}
+	}
+
+	return paragraph{content}, OK
+}
+
 func (p *Parser) parseBold(delim byte) (bold, tokenError) {
-	log.Fatal("bold unimplemented")
-	return bold{}, OK
+	// consume delim
+	p.readChar()
+	p.readChar()
+
+	start := p.pos
+	for p.ch != '\n' && p.ch != 0 {
+		p.readChar()
+		if p.ch == delim && p.peekChar() == delim {
+			break
+		}
+	}
+
+	if p.ch == '\n' || p.ch == 0 {
+		return bold{}, shouldBeText
+	}
+
+	s := p.file[start:p.pos]
+	p.readChar()
+	p.readChar()
+
+
+	return bold{s}, OK
 }
 
 func (p *Parser) parseItalic(delim byte) (italic, tokenError) {
@@ -198,9 +269,34 @@ func (p *Parser) parseItalic(delim byte) (italic, tokenError) {
 
 	s := p.file[start:p.pos]
 
-	p.readToEOL()
+	// consume delim
+	p.readChar()
 
 	return italic{s}, OK
+}
+
+func (p *Parser) parseLink() (link, tokenError) {
+	// start := p.pos
+	p.readChar()
+	disp, err := p.takeUntil(']')
+
+	if err != OK {
+		log.Fatal("Non ok in parseLink")
+	}
+
+	p.readChar()
+
+	if p.ch != '(' {
+		return link{}, shouldBeText
+	}
+
+	p.readChar()
+	url, err := p.takeUntil(')')
+	if err != OK {
+		log.Fatal("Non ok in parseLink")
+	}
+	p.readChar()
+	return link{disp, url}, OK
 }
 
 func (p Parser) String() string {

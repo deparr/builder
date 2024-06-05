@@ -1,6 +1,9 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Renderable interface {
 	ToHtml(d *directive) string
@@ -10,8 +13,24 @@ type paragraph struct {
 	content []Renderable
 }
 
-type text struct {
+func (p paragraph) ToHtml(d *directive) string {
+	lines := make([]string, 0, 5)
+	lines = append(lines, "<p>")
+	for _, e := range p.content {
+		// TODO: check for directives here
+		lines = append(lines, e.ToHtml(d))
+	}
+	lines = append(lines, "</p>")
+	return strings.Join(lines, "\n")
+}
+
+// TODO: combine text nodes into a single type
+type span struct {
 	string
+}
+
+func (s span) ToHtml(d *directive) string {
+	return fmt.Sprintf("<span>%s</span>", s.string)
 }
 
 type italic struct {
@@ -35,6 +54,9 @@ type link struct {
 	url     string
 }
 
+func (l link) ToHtml(d *directive) string {
+	return fmt.Sprintf("<a href=\"%s\">%s</a>", l.display, l.url)
+}
 
 type header struct {
 	level int
@@ -42,7 +64,7 @@ type header struct {
 }
 
 func (h header) ToHtml(d *directive) string {
-	return fmt.Sprintf("<h%d>%s<h%d>", h.level, h.s, h.level)
+	return fmt.Sprintf("<h%d>%s</h%d>", h.level, h.s, h.level)
 }
 
 type hr struct{}
@@ -51,19 +73,20 @@ func (h hr) ToHtml(d *directive) string {
 	return "<hr>"
 }
 
-type br struct {}
+type br struct{}
 
 func (b br) ToHtml(d *directive) string {
 	return "<br>"
 }
-
 
 type directive struct {
 	kind string
 	args []string
 }
 
-type code struct{}
+type code struct {
+	string
+}
 
 type codeBlock struct {
 	lang    string
