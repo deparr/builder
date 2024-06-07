@@ -3,11 +3,11 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = ["test.md"]
-  bin = "./tmp/parser"
-  cmd = "go build -o ./tmp/parser ./cmd/basic_parse.go"
+  args_bin = ["-r", "test.md"]
+  bin = "./tmp/builder"
+  cmd = "go build -o ./tmp/builder ./cmd/builder/main.go"
   delay = 1000
-  exclude_dir = ["assets", "tmp", "vendor", "testdata"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "build"]
   exclude_file = ["out.html"]
   exclude_regex = ["_test.go"]
   exclude_unchanged = false

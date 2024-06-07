@@ -17,7 +17,7 @@ only special chars are '*_#-[]()<'
 *Italic Text*
 
 #{date}
-#{sh "echo balls"}
+#{sh "echo"}
 #{style class=red}
 
 ####### header 2

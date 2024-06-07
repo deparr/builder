@@ -40,9 +40,8 @@ var parserReset position
 func (p *Parser) nextToken() (Renderable, error) {
 	var next Renderable
 	var err tokenError
-	log.Printf(">>Remaining:'%s'\ncur:0x%02x", p.file[p.pos:], p.ch)
+	// log.Printf(">>Remaining:'%s'\ncur:0x%02x", p.file[p.pos:], p.ch)
 	// var pos = p.pos
-	// ch should always be on a
 	parserReset = p.position
 	switch p.ch {
 	case '#':

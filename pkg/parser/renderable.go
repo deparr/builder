@@ -56,7 +56,7 @@ func (t text) ToHtml(d *directive) string {
 	// case textStrike
 	default:
 		tag = "span"
-		
+
 	}
 	return fmt.Sprintf("<%s>%s</%s>", tag, t.string, tag)
 }
