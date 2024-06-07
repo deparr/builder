@@ -5,11 +5,15 @@ import (
 	"log"
 )
 
-type Parser struct {
-	file    string
+type position struct {
 	pos     int
 	readPos int
 	ch      byte
+}
+
+type Parser struct {
+	file string
+	position
 }
 
 type tokenError int
@@ -28,6 +32,8 @@ func New(input string) *Parser {
 	return p
 }
 
+var parserReset position
+
 // Consumes the next renderable section of the input file.
 //
 // Only returns errors that are unrecoverable.
@@ -37,14 +43,10 @@ func (p *Parser) nextToken() (Renderable, error) {
 	log.Printf(">>Remaining:'%s'\ncur:0x%02x", p.file[p.pos:], p.ch)
 	// var pos = p.pos
 	// ch should always be on a
+	parserReset = p.position
 	switch p.ch {
 	case '#':
 		next, err = p.parseHeader()
-		if err != OK {
-			if err == shouldBeText {
-				log.Fatal("todo: handle `headerIsText`")
-			}
-		}
 
 	case '-':
 		if y, end := p.peekStr("--\n"); y {
@@ -59,11 +61,16 @@ func (p *Parser) nextToken() (Renderable, error) {
 
 	case 0:
 		log.Println("EOF in parser")
-		break
+
 	default:
-		log.Println("parsing paragraph")
 		next, err = p.parseParagraph()
-		log.Println(next)
+	}
+
+	if err != OK {
+		if err == shouldBeText {
+			p.position = parserReset
+			next, err = p.parseParagraph()
+		}
 	}
 	// todo: hmm
 	// if err != nil {
@@ -197,7 +204,6 @@ func (p *Parser) parseParagraph() (paragraph, tokenError) {
 			} else {
 				next, err = p.parseItalic(p.ch)
 			}
-			log.Println("parse after boldi", p)
 
 			if err != OK {
 				log.Fatal("todo: unhandled error parsing bolditalic")
@@ -212,12 +218,9 @@ func (p *Parser) parseParagraph() (paragraph, tokenError) {
 			if err != OK {
 			}
 
-			next = span{s}
+			next = text{textPlain, s}
 		}
 		content = append(content, next)
-		if len(content) > 4 {
-			log.Fatal("too big")
-		}
 
 		if p.ch == '\n' {
 			if p.peekChar() == '\n' {
@@ -231,7 +234,7 @@ func (p *Parser) parseParagraph() (paragraph, tokenError) {
 	return paragraph{content}, OK
 }
 
-func (p *Parser) parseBold(delim byte) (bold, tokenError) {
+func (p *Parser) parseBold(delim byte) (text, tokenError) {
 	// consume delim
 	p.readChar()
 	p.readChar()
@@ -245,18 +248,17 @@ func (p *Parser) parseBold(delim byte) (bold, tokenError) {
 	}
 
 	if p.ch == '\n' || p.ch == 0 {
-		return bold{}, shouldBeText
+		return text{}, shouldBeText
 	}
 
 	s := p.file[start:p.pos]
 	p.readChar()
 	p.readChar()
 
-
-	return bold{s}, OK
+	return text{textBold, s}, OK
 }
 
-func (p *Parser) parseItalic(delim byte) (italic, tokenError) {
+func (p *Parser) parseItalic(delim byte) (text, tokenError) {
 	p.readChar()
 	start := p.pos
 	for p.ch != '\n' && p.ch != 0 && p.ch != delim {
@@ -264,7 +266,7 @@ func (p *Parser) parseItalic(delim byte) (italic, tokenError) {
 	}
 
 	if p.ch == '\n' || p.ch == 0 {
-		return italic{}, shouldBeText
+		return text{}, shouldBeText
 	}
 
 	s := p.file[start:p.pos]
@@ -272,7 +274,7 @@ func (p *Parser) parseItalic(delim byte) (italic, tokenError) {
 	// consume delim
 	p.readChar()
 
-	return italic{s}, OK
+	return text{textItalic, s}, OK
 }
 
 func (p *Parser) parseLink() (link, tokenError) {
@@ -296,6 +298,14 @@ func (p *Parser) parseLink() (link, tokenError) {
 		log.Fatal("Non ok in parseLink")
 	}
 	p.readChar()
+
+	if len(url) == 0 {
+		return link{}, shouldBeText
+	}
+	if len(disp) == 0 {
+		disp = url
+	}
+
 	return link{disp, url}, OK
 }
 

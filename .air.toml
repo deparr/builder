@@ -3,7 +3,7 @@ testdata_dir = "testdata"
 tmp_dir = "tmp"
 
 [build]
-  args_bin = []
+  args_bin = ["test.md"]
   bin = "./tmp/parser"
   cmd = "go build -o ./tmp/parser ./cmd/basic_parse.go"
   delay = 1000

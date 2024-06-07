@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+type textTransform int
+
+const (
+	textBold = iota
+	textItalic
+	textStrike
+	textUnder
+	textPlain
+)
+
 type Renderable interface {
 	ToHtml(d *directive) string
 }
@@ -24,30 +34,56 @@ func (p paragraph) ToHtml(d *directive) string {
 	return strings.Join(lines, "\n")
 }
 
-// TODO: combine text nodes into a single type
-type span struct {
+// TODO: quote renderable
+// TODO: list renderable
+//list TODO: table renderable
+
+type text struct {
+	textTransform
 	string
 }
 
-func (s span) ToHtml(d *directive) string {
-	return fmt.Sprintf("<span>%s</span>", s.string)
+func (t text) ToHtml(d *directive) string {
+	var tag string
+	switch t.textTransform {
+	case textBold:
+		tag = "strong"
+	case textItalic:
+		tag = "em"
+
+	// TODO: I dont think this works like this
+	// case textUnder
+	// case textStrike
+	default:
+		tag = "span"
+		
+	}
+	return fmt.Sprintf("<%s>%s</%s>", tag, t.string, tag)
 }
 
-type italic struct {
-	string
-}
-
-func (i italic) ToHtml(d *directive) string {
-	return fmt.Sprintf("<em>%s</em>", i.string)
-}
-
-type bold struct {
-	string
-}
-
-func (b bold) ToHtml(d *directive) string {
-	return fmt.Sprintf("<strong>%s</strong>", b.string)
-}
+// type span struct {
+// 	string
+// }
+//
+// func (s span) ToHtml(d *directive) string {
+// 	return fmt.Sprintf("<span>%s</span>", s.string)
+// }
+//
+// type italic struct {
+// 	string
+// }
+//
+// func (i italic) ToHtml(d *directive) string {
+// 	return fmt.Sprintf("<em>%s</em>", i.string)
+// }
+//
+// type bold struct {
+// 	string
+// }
+//
+// func (b bold) ToHtml(d *directive) string {
+// 	return fmt.Sprintf("<strong>%s</strong>", b.string)
+// }
 
 type link struct {
 	display string
