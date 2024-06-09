@@ -108,6 +108,7 @@ func main() {
 		}
 
 		os.Mkdir("build", 0o766)
+		// todo: this sucks
 		outFilename := "build/" + strings.Replace(path.Base(opts.root), ".md", ".html", 1)
 		outFile, err := os.Create(outFilename)
 		if err != nil {

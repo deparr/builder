@@ -7,7 +7,7 @@ import (
 	"text/template"
 )
 
-//go:embed template/index.html
+//go:embed template/page.html
 var pageTmpl string
 var page *template.Template
 

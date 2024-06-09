@@ -1,16 +1,11 @@
-<!DOCTYPE HTML>
-<html>
+<!doctype html>
+<html lang={{"\""}}{{.Locale}}{{"\""}}>
 <head>
-    {{range .HeadTags}}
-        {{.}}
-    {{end}}
+{{range .HeadTags}}{{.}}{{"\n"}}
+{{end}}
 </head>
 <body>
-    {{range .Body}} 
-        {{.}}
-    {{end}}
-    {{if .Footer}}
-        <p>footer</p>
-    {{end}}
+{{range .Body}}{{.}}{{"\n"}}{{end}}
+{{if .Footer}}{{.Footer}}{{end}}
 </body>
 </html>
