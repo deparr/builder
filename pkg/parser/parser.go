@@ -22,6 +22,7 @@ const (
 	OK = iota
 	malformedHeader
 	shouldBeText
+	EOF
 )
 
 func New(input string) *Parser {
@@ -139,9 +140,13 @@ func (p *Parser) readToEOL() {
 func (p *Parser) takeUntil(target byte) (string, tokenError) {
 	start := p.pos
 	for p.ch != 0 && p.ch != '\n' && p.ch != target {
+		log.Println("in takeunilt", p)
 		p.readChar()
 	}
-	if p.ch == 0 || (target != '\n' && p.ch == '\n') {
+	if p.ch == 0 {
+		return "", EOF
+	}
+	if target != '\n' && p.ch == '\n' {
 		return "", shouldBeText
 	}
 	s := p.file[start:p.pos]
@@ -195,14 +200,22 @@ func (p *Parser) parseParagraph() (paragraph, tokenError) {
 		var next Renderable
 		var err tokenError
 		switch p.ch {
+		case '~':
+			fallthrough
+		case '`':
+			fallthrough
 		case '_':
 			fallthrough
 		case '*':
-			if p.peekChar() == p.ch {
-				next, err = p.parseBold(p.ch)
-			} else {
-				next, err = p.parseItalic(p.ch)
-			}
+			// if p.peekChar() == p.ch {
+			// 	next, err = p.parseBold(p.ch)
+			// } else {
+			// 	next, err = p.parseItalic(p.ch)
+			// }
+
+			log.Println("PARSING INOILNE")
+			next, err = p.parseInline()
+			log.Fatal(next, p)
 
 			if err != OK {
 				log.Fatal("todo: unhandled error parsing bolditalic")
@@ -235,6 +248,7 @@ func (p *Parser) parseParagraph() (paragraph, tokenError) {
 
 func (p *Parser) parseBold(delim byte) (text, tokenError) {
 	// consume delim
+	delimStart := p.pos
 	p.readChar()
 	p.readChar()
 
@@ -247,7 +261,8 @@ func (p *Parser) parseBold(delim byte) (text, tokenError) {
 	}
 
 	if p.ch == '\n' || p.ch == 0 {
-		return text{}, shouldBeText
+		s := p.file[delimStart:p.pos]
+		return text{textPlain, s}, OK
 	}
 
 	s := p.file[start:p.pos]
@@ -274,6 +289,44 @@ func (p *Parser) parseItalic(delim byte) (text, tokenError) {
 	p.readChar()
 
 	return text{textItalic, s}, OK
+}
+
+func (p *Parser) parseInline() (text, tokenError) {
+	delim := p.ch
+	delimStart := p.pos
+	var transform textTransform
+	switch delim {
+	case '_':
+		fallthrough
+	case '*':
+		if p.peekChar() == delim {
+			p.readChar()
+			transform = textBold
+		} else {
+			transform = textItalic
+		}
+	case '`':
+		transform = textCode
+	case '~':
+		transform = textStrike
+	}
+
+	// consume delim
+	p.readChar()
+	log.Println("DELIM", delim)
+	s, err := p.takeUntil(delim)
+	if err == EOF {
+		transform = textPlain
+		s = p.file[delimStart:len(p.file)]
+	}
+
+	if transform == textBold {
+
+	}
+
+	log.Println(p)
+
+	return text{transform, s}, OK
 }
 
 func (p *Parser) parseLink() (link, tokenError) {
@@ -306,6 +359,10 @@ func (p *Parser) parseLink() (link, tokenError) {
 	}
 
 	return link{disp, url}, OK
+}
+
+func isFmtDelim(d byte) bool {
+	return d == '*' || d == '_' || d == '`' || d == '~'
 }
 
 func (p Parser) String() string {
