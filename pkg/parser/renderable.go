@@ -8,11 +8,12 @@ import (
 type textTransform int
 
 const (
-	textBold = iota
+	textPlain = iota
+	textBold
 	textItalic
 	textStrike
 	textUnder
-	textPlain
+	textCode
 )
 
 type Renderable interface {
