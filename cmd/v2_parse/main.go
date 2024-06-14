@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/deparr/builder/pkg/v2/lexer"
-	"github.com/deparr/builder/pkg/v2/lexer/token"
+	"github.com/deparr/builder/pkg/v2/parser"
 )
 
 func main() {
@@ -40,18 +40,13 @@ only special chars are '*_#-[]()<'
 	// file := `<!--class bold,big,italic-->`
 
 	l := lexer.New(file)
-	res, err := l.Tokenize()
-	fmt.Println(res)
+	tokens, err := l.Tokenize()
+	fmt.Println(tokens)
 	if err != nil {
 		println("err:", err)
-		return 
+		return
 	}
-	
 
-	for _, r := range res {
-		fmt.Printf("%s ", r)
-		if r.Type == token.NEWLINE_T {
-			fmt.Println()
-		}
-	}
+	parsed, err := parser.Parse(tokens)
+	fmt.Println(parsed)
 }

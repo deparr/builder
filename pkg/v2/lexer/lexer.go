@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/deparr/builder/pkg/v2/lexer/token"
+	"github.com/deparr/builder/pkg/v2/token"
 )
 
 type Lexer struct {
