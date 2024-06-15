@@ -125,6 +125,55 @@ func (t Token) String() string {
 	return tt
 }
 
+func (t Token) ToLiteral() string {
+	switch t.Type {
+	case TEXT_T:
+		return t.Literal
+	case ASTERISK_T:
+		return "*"
+	case UNDERSCORE_T:
+		return "_"
+	case OCTOTHORPE_T:
+		return "#"
+	case BACKTICK_T:
+		return "`"
+	case BANG_T:
+		return "!"
+	case DASH_T:
+		return "-"
+	case TILDE_T:
+		return "~"
+	case GREATER_T:
+		return ">"
+	case LESS_T:
+		return "<"
+	case L_BRACK_T:
+		return "["
+	case R_BRACK_T:
+		return "]"
+	case L_PAREN_T:
+		return "("
+	case R_PAREN_T:
+		return ")"
+	case COMMENT_OPEN_T:
+		return "<!--"
+	case COMMENT_CLOSE_T:
+		return "-->"
+	case H_RULE_T:
+		return "---"
+
+	case TAB_T:
+		return "\t"
+	case SPACE_T:
+		return " "
+	case NEWLINE_T:
+		return "\n"
+
+	default:
+		return ""
+	}
+}
+
 func IsSymbol(r rune) bool {
 	return r == ASTERISK || r == UNDERSCORE || r == OCTOTHORPE ||
 		r == BACKTICK || r == BANG || r == DASH || r == TILDE ||

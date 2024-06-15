@@ -8,36 +8,37 @@ import (
 )
 
 func main() {
-	file := `
-# Header
----
+// 	file := `
+// # Header
+// ---
+//
+// A paragraph with a single line.
+//
+// This paragraph has two
+// lines (in source).
+//
+// Paragraph with link [github](https://github.com/deparr) 
+// [](https://github.com/deparr)
+//
+// only special chars are '*_#-[]()<'
+//
+// **Bold text**
+//
+//
+// *Italic Text*
+//
+// <!--date-->
+// <!--sh "echo"-->
+// <!--style class=red-->
+//
+// ####### header 2
+// #header
+//
+// **bold text that never gets closed
+// `
 
-A paragraph with a single line.
-
-This paragraph has two
-lines (in source).
-
-Paragraph with link [github](https://github.com/deparr) 
-[](https://github.com/deparr)
-
-only special chars are '*_#-[]()<'
-
-**Bold text**
-
-
-*Italic Text*
-
-<!--date-->
-<!--sh "echo"-->
-<!--style class=red-->
-
-####### header 2
-#header
-
-**bold text that never gets closed
-`
-
-	// file := `<!--class bold,big,italic-->`
+	file := `# header
+### ### a real header * with symbols` + "```rust\n```"
 
 	l := lexer.New(file)
 	tokens, err := l.Tokenize()
@@ -49,4 +50,7 @@ only special chars are '*_#-[]()<'
 
 	parsed, err := parser.Parse(tokens)
 	fmt.Println(parsed)
+	for _, r := range parsed {
+		fmt.Println(r.RenderHtml())
+	}
 }
