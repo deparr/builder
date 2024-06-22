@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/deparr/builder/pkg/v2/render"
@@ -76,33 +77,70 @@ func Parse(tokens []token.Token) ([]render.Renderable, error) {
 			fallthrough
 		// paragraph
 		default:
-			fmt.Println("TODO PARAGRAPH")
+			endline := nextNewline(tokens[i:])
+			parseParagraphLine(tokens[i : i+endline])
+			i += endline
 		}
 	}
 	return renders, nil
 }
 
 func parseParagraphLine(ts []token.Token) []render.Renderable {
-	active := render.Plain
-	joinable := make([]token.Token, 0, 10)
-	styleStart := map[render.TextStyle]int{}
+	type qnode struct {
+		dc int
+		d  rune
+		s  int
+	}
+
+	q := make([]qnode, 10)
+	top := 0
+	ranges := make([][]int, 0, 4)
 	for i := 0; i < len(ts); {
 		t := ts[i]
 		switch t.Type {
 		case token.ASTERISK_T:
-			if active == render.Plain {
-			}
-
+			fallthrough
 		case token.UNDERSCORE_T:
-			if active == render.Plain {
+			delimStart := i
+			for ; i < len(ts) && ts[i].Type == t.Type; i++ {
 			}
+			dc := i - delimStart
+			d := rune(t.ToLiteral()[0])
+			s := i
+			if top >= 0 && dc == q[top].dc {
+				snode := q[top]
+				top -= 1
+				if snode.d != d {
+					panic("mismatched delim with matching count")
+				}
+
+				ranges = append(ranges, []int{snode.s, delimStart})
+			} else {
+				top += 1
+				q[top] = qnode{dc, d, s}
+			}
+		default:
+			i++
 		}
+
 	}
+
+	fmt.Println(ranges)
+	slices.SortFunc(ranges, func(a, b []int) int {
+		if b[0] == a[0] {
+			return a[1] - b[1]
+		}
+		return a[0] - b[0]
+	})
+	// styles := []render.TextStyle{render.Plain, render.Italic, render.Bold, render.Bold | render.Italic}
+	fmt.Println(ranges)
+
+	return nil
 }
 
 func next(ts []token.Token, tt token.TokenType) int {
 	for i, t := range ts {
-		if t.Type == tt {
+		if t.Type == tt || t.Type == token.NEWLINE_T {
 			return i
 		}
 	}

@@ -37,8 +37,7 @@ func main() {
 // **bold text that never gets closed
 // `
 
-	file := `# header
-### ### a real header * with symbols` + "```rust\n```"
+	file := `**A paragraph line** with different *formats*`
 
 	l := lexer.New(file)
 	tokens, err := l.Tokenize()
